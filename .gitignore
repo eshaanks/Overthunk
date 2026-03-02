@@ -1,0 +1,52 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ----------------------
+# macOS
+# ----------------------
+.DS_Store
+
+# ----------------------
+# VS Code
+# ----------------------
+.vscode/
+
+# ----------------------
+# Logs / experiment outputs
+# ----------------------
+data/*
+plots/*
+
+# keep folders but ignore contents
+!data/.gitkeep
+!plots/.gitkeep
+
+# ----------------------
+# Ollama / local models
+# ----------------------
+*.gguf
+
+# ----------------------
+# Python testing/cache
+# ----------------------
+.pytest_cache/
+.mypy_cache/
+
+# ----------------------
+# Jupyter (if later used)
+# ----------------------
+.ipynb_checkpoints/

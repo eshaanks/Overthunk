@@ -1,7 +1,7 @@
 import csv
 import os
 
-def log_result(file_path: str, episode: int, seed: int, mode: str, y_true: str, action: str):
+def log_result(file_path: str, episode: int, seed: int, mode: str, y_true: str, action: str, K: int):
     """
     Appends a single experiment result to a CSV file.
     Creates the file and header if it doesn't exist.
@@ -18,7 +18,7 @@ def log_result(file_path: str, episode: int, seed: int, mode: str, y_true: str, 
         
         # Write header only once
         if not file_exists:
-            writer.writerow(["episode", "seed", "mode", "y_true", "action", "correct"])
+            writer.writerow(["episode", "seed", "mode", "K", "y_true", "action", "correct"])
             
         # Write the data row
-        writer.writerow([episode, seed, mode, y_true, action, correct])
+        writer.writerow([episode, seed, mode, K, y_true, action, correct])

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from src.env import Case
 from typing import Dict, Tuple, Any
+import math
 
 def bucket_days(days_since_purchase: int) -> str:
     if days_since_purchase <= 14:
@@ -21,15 +22,7 @@ def bucket_value(purchase_value: float) -> str:
         return "101-500"
     return "501-100"
 
-def bucket_K(k: int) -> str:
-    if k <= 3:
-        return "shallow"
-    if k <=8:
-        return "medium"
-    return "deep"
-
 Signature = Tuple[str, str, str, bool, str]
-Key = Tuple[Signature, str]
 
 def make_signature(case: Case) -> Signature:
     days_b = bucket_days(case.days_since_purchase)
@@ -38,26 +31,44 @@ def make_signature(case: Case) -> Signature:
 
 @dataclass
 class EpisodicMemory:
-    unseen_risk: float = 0.5
-    seen: Dict[Key, int] = field(default_factory=lambda:defaultdict(int))
-    failed: Dict[Key, int] = field(default_factory=lambda:defaultdict(int))
+    lr: float = 0.05  # learning rate
+
+    alpha: Dict[Signature, float] = field(default_factory=dict)
+    beta: Dict[Signature, float] = field(default_factory=dict)
+
+    def _ensure_params(self, signature: Signature):
+        if signature not in self.alpha:
+            self.alpha[signature] = 0.0
+            self.beta[signature] = 1.0
 
     def update(self, signature: Signature, *, K: int, correct: bool) -> None:
-        key = (signature, bucket_K(K))
-        self.seen[key] += 1
-        if not correct:
-            self.failed[key] += 1
+        self._ensure_params(signature)
+
+        # convert to failure label
+        y = 0 if correct else 1
+
+        a = self.alpha[signature]
+        b = self.beta[signature]
+
+        # forward pass
+        z = a - b * math.log(K)
+        r_hat = 1.0 / (1.0 + math.exp(-z))
+
+        # gradient term
+        error = r_hat - y
+
+        # gradient step
+        self.alpha[signature] -= self.lr * error
+        self.beta[signature] -= self.lr * error * (-math.log(K))
         
     def risk(self, signature: Signature, K: int) -> float:
-        key = (signature, bucket_K(K))
-        n = self.seen[key]
-        if n == 0:
-            return self.unseen_risk
-        return self.failed[key]/n
-    
-    def count(self, signature: Signature, K: int) -> int:
-        key = (signature, bucket_K(K))
-        return self.seen[key]
+        self._ensure_params(signature)
+
+        a = self.alpha[signature]
+        b = self.beta[signature]
+
+        z = a - b * math.log(K)
+        return 1.0 / (1.0 + math.exp(-z))
 
 
 

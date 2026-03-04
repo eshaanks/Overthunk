@@ -11,6 +11,11 @@ class ArgminController:
     K_min = 1
     K_max = 12
 
+    def __init__(self, lam: float = 0.01, K_min: int = 1, K_max: int = 12):
+        self.lam = lam
+        self.K_min = K_min
+        self.K_max = K_max
+
     def chooseK(self, memory: EpisodicMemory, sig: Signature) -> int:
         best_K = self.K_min
         best_score = float("inf")

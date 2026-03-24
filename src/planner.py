@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from random import Random
 from typing import Protocol
-import math
+from src.bayes_memory import make_signature
 
 from src.env import ACTIONS, Action, Case
 
@@ -51,21 +51,30 @@ class DummyPlanner:
 class DepthAwarePlanner:
     def __init__(self, rng: Random):
         self.rng = rng
+        self.difficulty = {}
 
     def decide(self, case: Case, K: int) -> Action:
         from src.env import ground_truth
 
         true_action = ground_truth(case)
+        sig = make_signature(case)
 
-        acc_min = 0.35   # accuracy at K=1
-        acc_max = 0.90   # accuracy at K=12
-        K_max = 12
+        if sig not in self.difficulty:
+            d = self.rng.gauss(0.2, 0.1)
+            d = max(0.0, min(0.4, d))
+            self.difficulty[sig] = d
 
-        accuracy = acc_min + (acc_max - acc_min) * (K - 1) / (K_max - 1)
+        difficulty = self.difficulty[sig]
+
+        # difficulty controls both base accuracy and slope
+        base_accuracy = 0.85 - 0.55 * (difficulty / 0.4)
+        slope = 0.005 + 0.08 * (difficulty / 0.4)
+
+        accuracy = base_accuracy + slope * (K - 1)
+        accuracy = max(0.05, min(0.95, accuracy))
 
         if self.rng.random() < accuracy:
             return true_action
         else:
-            # return a wrong action
             wrong_actions = [a for a in ACTIONS if a != true_action]
             return self.rng.choice(wrong_actions)
